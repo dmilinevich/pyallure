@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyallure-like"
+version = "0.1.0"
+description = "Python-only static test reporting inspired by Allure"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name = "pyrep contributors"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "behave>=1.2.6"]
+
+[project.scripts]
+pyrep = "pyrep.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["pyrep*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
