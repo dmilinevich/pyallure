@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
 import time
+import uuid
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -38,13 +38,6 @@ def _ci_metadata() -> dict[str, str | None]:
             "build_url": os.getenv("BUILD_URL"),
         }
     return {"git_sha": None, "branch": None, "build_url": None}
-
-
-def _stable_run_id(test_cases: list[TestCase], started: float, finished: float) -> str:
-    seed = [f"{started:.6f}", f"{finished:.6f}"]
-    for t in test_cases:
-        seed.append(f"{t.id}|{t.status}|{t.start:.6f}|{t.stop:.6f}")
-    return hashlib.sha256("\n".join(seed).encode("utf-8")).hexdigest()[:16]
 
 
 def aggregate_results(results_dir: Path) -> tuple[TestRun, list[TestCase]]:
@@ -128,7 +121,7 @@ def aggregate_results(results_dir: Path) -> tuple[TestRun, list[TestCase]]:
 
     run = TestRun(
         schema_version=SCHEMA_VERSION,
-        id=_stable_run_id(test_cases, started, finished),
+        id=str(uuid.uuid4()),
         started_at=started,
         finished_at=finished,
         duration=finished - started,

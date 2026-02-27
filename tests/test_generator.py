@@ -13,7 +13,7 @@ def _write_events(results_dir: Path) -> None:
         {"event": "step_start", "test_id": "t1", "id": "s1", "name": "step", "start": 1.1, "parent_id": None},
         {"event": "step_stop", "test_id": "t1", "id": "s1", "stop": 1.2, "status": "passed"},
         {"event": "attachment", "test_id": "t1", "id": "a1", "name": "log", "mime": "text/plain", "path": "a1.txt", "size": 3},
-        {"event": "test_stop", "test_id": "t1", "status": "passed", "stop": 1.5, "retries": ["call:0.001000"]},
+        {"event": "test_stop", "test_id": "t1", "status": "passed", "stop": 1.5, "retries": []},
     ]
     (results_dir / "attachments").mkdir(parents=True)
     (results_dir / "attachments" / "a1.txt").write_text("hey", encoding="utf-8")
@@ -30,16 +30,6 @@ def test_aggregate_results(tmp_path: Path) -> None:
     assert run.summary["passed"] == 1
     assert len(tests) == 1
     assert tests[0].steps[0].name == "step"
-    assert tests[0].retries == ["call:0.001000"]
-
-
-def test_deterministic_run_id(tmp_path: Path) -> None:
-    results = tmp_path / "results"
-    results.mkdir()
-    _write_events(results)
-    run1, _ = aggregate_results(results)
-    run2, _ = aggregate_results(results)
-    assert run1.id == run2.id
 
 
 def test_generate_static_report(tmp_path: Path) -> None:

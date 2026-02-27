@@ -5,24 +5,24 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from pyrep.storage import EventStore
 
 _current_test: contextvars.ContextVar[str | None] = contextvars.ContextVar("current_test", default=None)
-_step_stack: contextvars.ContextVar[tuple[dict[str, Any], ...]] = contextvars.ContextVar("step_stack", default=())
+_step_stack: contextvars.ContextVar[list[dict[str, Any]]] = contextvars.ContextVar("step_stack", default=[])
 _results_dir: contextvars.ContextVar[Path | None] = contextvars.ContextVar("results_dir", default=None)
 
 
 def bind_test(test_id: str, results_dir: str | Path) -> None:
     _current_test.set(test_id)
     _results_dir.set(Path(results_dir))
-    _step_stack.set(())
+    _step_stack.set([])
 
 
 def unbind_test() -> None:
     _current_test.set(None)
-    _step_stack.set(())
+    _step_stack.set([])
 
 
 def _emit(event: dict[str, Any]) -> None:
@@ -35,14 +35,13 @@ def _emit(event: dict[str, Any]) -> None:
 
 
 @contextmanager
-def step(name: str) -> Iterator[None]:
+def step(name: str):
     start = time.time()
     step_id = str(uuid.uuid4())
     stack = list(_step_stack.get())
-    parent_id = stack[-1]["id"] if stack else None
     stack.append({"id": step_id, "name": name, "start": start})
-    _step_stack.set(tuple(stack))
-    _emit({"event": "step_start", "id": step_id, "name": name, "start": start, "parent_id": parent_id})
+    _step_stack.set(stack)
+    _emit({"event": "step_start", "id": step_id, "name": name, "start": start, "parent_id": stack[-2]["id"] if len(stack) > 1 else None})
     status = "passed"
     try:
         yield
@@ -54,7 +53,7 @@ def step(name: str) -> Iterator[None]:
         stack = list(_step_stack.get())
         if stack:
             stack.pop()
-        _step_stack.set(tuple(stack))
+        _step_stack.set(stack)
         _emit({"event": "step_stop", "id": step_id, "stop": stop, "status": status})
 
 
@@ -63,7 +62,6 @@ def attach(name: str, content: bytes | str, mime: str = "text/plain") -> None:
     results_dir = _results_dir.get()
     if not test_id or not results_dir:
         return
-
     payload = content.encode("utf-8") if isinstance(content, str) else content
     attachment_id = str(uuid.uuid4())
     ext = {
@@ -74,8 +72,6 @@ def attach(name: str, content: bytes | str, mime: str = "text/plain") -> None:
     }.get(mime, "bin")
     path = EventStore(results_dir).attachments_dir / f"{attachment_id}.{ext}"
     path.write_bytes(payload)
-
-    stack = _step_stack.get()
     _emit(
         {
             "event": "attachment",
@@ -84,7 +80,7 @@ def attach(name: str, content: bytes | str, mime: str = "text/plain") -> None:
             "mime": mime,
             "path": path.name,
             "size": len(payload),
-            "step_id": stack[-1]["id"] if stack else None,
+            "step_id": (_step_stack.get()[-1]["id"] if _step_stack.get() else None),
         }
     )
 

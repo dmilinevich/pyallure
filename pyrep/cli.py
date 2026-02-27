@@ -27,10 +27,7 @@ def cmd_collect_pytest(args: argparse.Namespace) -> int:
     env["PYREP_RESULTS_DIR"] = str(Path(args.results_dir).resolve())
     env["PYTHONPATH"] = os.pathsep.join([str(Path.cwd()), env.get("PYTHONPATH", "")]).strip(os.pathsep)
     cmd = ["pytest", "-p", "pyrep.adapters.pytest.plugin", *args.pytest_args]
-    try:
-        return subprocess.call(cmd, env=env)
-    except FileNotFoundError as exc:
-        raise SystemExit("pytest executable not found. Install pytest or use `pip install -e .[dev]`.") from exc
+    return subprocess.call(cmd, env=env)
 
 
 def cmd_collect_behave(args: argparse.Namespace) -> int:
@@ -38,10 +35,7 @@ def cmd_collect_behave(args: argparse.Namespace) -> int:
     env["PYREP_RESULTS_DIR"] = str(Path(args.results_dir).resolve())
     env["PYTHONPATH"] = os.pathsep.join([str(Path.cwd()), env.get("PYTHONPATH", "")]).strip(os.pathsep)
     cmd = ["behave", "-f", "pyrep.adapters.behave.formatter:PyrepFormatter", *args.behave_args]
-    try:
-        return subprocess.call(cmd, env=env)
-    except FileNotFoundError as exc:
-        raise SystemExit("behave executable not found. Install behave or use `pip install -e .[dev]`.") from exc
+    return subprocess.call(cmd, env=env)
 
 
 def cmd_generate(args: argparse.Namespace) -> int:

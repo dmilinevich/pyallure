@@ -68,8 +68,7 @@ function stepHtml(step){
 }
 function renderDetail(t){
   const at = (t.attachments||[]).map(a=>`<li><a href='report-data/attachments/${encodeURIComponent(a.path)}' target='_blank'>${esc(a.name)}</a> (${esc(a.mime)})</li>`).join('');
-  const retryInfo = (t.retries&&t.retries.length)?`<p><b>Retries:</b> ${t.retries.length}</p>`:'';
-  return `<article><h3>${esc(t.name)}</h3><p>${esc(t.suite)} · ${esc(t.status)} · ${fmt(t.duration)}</p>${retryInfo}
+  return `<article><h3>${esc(t.name)}</h3><p>${esc(t.suite)} · ${esc(t.status)} · ${fmt(t.duration)}</p>
   ${t.error?`<pre>${esc(t.error)}</pre>`:''}
   <h4>Steps</h4><ul>${(t.steps||[]).map(stepHtml).join('')}</ul>
   <h4>Attachments</h4><ul>${at}</ul></article>`;
